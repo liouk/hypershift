@@ -14,6 +14,11 @@ func HCOAuthEnabled(hc *hyperv1.HostedCluster) bool {
 	return oauthEnabled(hc.Spec.Configuration)
 }
 
+func HCPExternalOIDCEnabled(hcp *hyperv1.HostedControlPlane) bool {
+	config := hcp.Spec.Configuration
+	return config != nil && config.Authentication != nil && config.Authentication.Type == configv1.AuthenticationTypeOIDC
+}
+
 func ConfigOAuthEnabled(authentication *configv1.AuthenticationSpec) bool {
 	if authentication != nil &&
 		authentication.Type == configv1.AuthenticationTypeOIDC {
