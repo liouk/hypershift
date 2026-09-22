@@ -81,14 +81,17 @@ func NewComponent() component.ControlPlaneComponent {
 		).
 		WithManifestAdapter(
 			"auth-config.yaml",
+			component.WithPredicate(enableDirectOIDCAuthenticationConfig),
 			component.WithAdaptFunction(adaptAuthConfig),
 		).
 		WithManifestAdapter(
 			"oauth-metadata.yaml",
+			component.WithPredicate(enableOAuthMetadata),
 			component.WithAdaptFunction(adaptOauthMetadata),
 		).
 		WithManifestAdapter(
 			"authentication-token-webhook-config.yaml",
+			component.WithPredicate(enableTokenWebhookAuthenticator),
 			component.WithAdaptFunction(adaptAuthenticationTokenWebhookConfigSecret),
 		).
 		WithManifestAdapter(
@@ -138,4 +141,17 @@ func enableAzureKMSSecretProvider(cpContext component.WorkloadContext) bool {
 // enableIfCustomKubeconfig is a helper predicate for the common use case of enabling a resource when a KubeAPICustomKubeconfig is specified.
 func enableIfCustomKubeconfig(cpContext component.WorkloadContext) bool {
 	return hyperutils.EnableIfCustomKubeconfig(cpContext.HCP)
+}
+
+func enableDirectOIDCAuthenticationConfig(cpContext component.WorkloadContext) bool {
+	configuration := cpContext.HCP.Spec.Configuration
+	return configuration != nil && usesDirectOIDCAuthenticationConfig(configuration.Authentication)
+}
+
+func enableTokenWebhookAuthenticator(cpContext component.WorkloadContext) bool {
+	configuration := cpContext.HCP.Spec.Configuration
+	if configuration == nil {
+		return usesTokenWebhookAuthenticator(nil)
+	}
+	return usesTokenWebhookAuthenticator(configuration.Authentication)
 }
