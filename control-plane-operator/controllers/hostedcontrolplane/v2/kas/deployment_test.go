@@ -141,6 +141,32 @@ func TestResolveKASVerbosity(t *testing.T) {
 	}
 }
 
+func TestRemoveVolumeAndMounts(t *testing.T) {
+	t.Parallel()
+	g := NewWithT(t)
+
+	podSpec := &corev1.PodSpec{
+		Containers: []corev1.Container{
+			{
+				Name: ComponentName,
+				VolumeMounts: []corev1.VolumeMount{
+					{Name: oauthMetadataVolumeName},
+					{Name: "other-volume"},
+				},
+			},
+		},
+		Volumes: []corev1.Volume{
+			{Name: oauthMetadataVolumeName},
+			{Name: "other-volume"},
+		},
+	}
+
+	removeVolumeAndMounts(podSpec, oauthMetadataVolumeName)
+
+	g.Expect(podSpec.Volumes).To(ConsistOf(corev1.Volume{Name: "other-volume"}))
+	g.Expect(podSpec.Containers[0].VolumeMounts).To(ConsistOf(corev1.VolumeMount{Name: "other-volume"}))
+}
+
 // findContainerByNameInPod finds a container by name in a PodSpec and returns a pointer to it.
 // Returns nil if the container is not found.
 func findContainerByNameInPod(podSpec *corev1.PodSpec, name string) *corev1.Container {
